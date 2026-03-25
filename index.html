@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autopilot Group Tag Generator</title>
+<style>
+  :root {
+    --bg-deep: #0f172a;
+    --bg-mid: #1e293b;
+    --bg-card: rgba(30,41,59,0.8);
+    --bg-dark: rgba(15,23,42,0.6);
+    --blue: #3b82f6;
+    --blue-light: #60a5fa;
+    --blue-pale: #93c5fd;
+    --green: #34d399;
+    --green-dark: #059669;
+    --pink: #f472b6;
+    --yellow: #fbbf24;
+    --text: #e2e8f0;
+    --text-mid: #94a3b8;
+    --text-dim: #64748b;
+    --text-dark: #475569;
+    --text-faint: #334155;
+    --border: rgba(148,163,184,0.15);
+    --border-light: rgba(148,163,184,0.1);
+    --border-blue: rgba(59,130,246,0.2);
+    --mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+    --sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-deep) 0%, var(--bg-mid) 50%, var(--bg-deep) 100%);
+    font-family: var(--sans);
+    color: var(--text);
+    padding: 24px 16px;
+  }
+
+  .container { max-width: 680px; margin: 0 auto; }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 32px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(59,130,246,0.1); border: 1px solid var(--border-blue);
+    border-radius: 8px; padding: 6px 16px; margin-bottom: 12px;
+    font-size: 12px; color: var(--blue-light); letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--blue); box-shadow: 0 0 8px var(--blue);
+  }
+  .title {
+    font-size: 28px; font-weight: 700; margin-bottom: 6px;
+    background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle { font-size: 13px; color: var(--text-dim); }
+  .subtitle code { font-family: var(--mono); color: var(--text-mid); }
+
+  /* Categories */
+  .category { margin-bottom: 20px; }
+  .category-label {
+    font-size: 11px; font-weight: 600; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;
+  }
+  .options { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .option-btn {
+    display: flex; flex-direction: column; align-items: flex-start;
+    padding: 10px 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: rgba(30,41,59,0.6);
+    cursor: pointer; transition: all 0.15s ease; min-width: 100px;
+    color: inherit; font-family: inherit;
+  }
+  .option-btn:hover { border-color: rgba(148,163,184,0.3); }
+  .option-btn.selected {
+    border: 1.5px solid var(--blue);
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(59,130,246,0.05));
+    box-shadow: 0 0 16px rgba(59,130,246,0.15);
+  }
+  .option-btn.disabled {
+    opacity: 0.35; cursor: not-allowed;
+    background: rgba(15,23,42,0.4);
+  }
+  .option-btn.wide { min-width: 140px; }
+
+  .option-top { display: flex; align-items: center; gap: 8px; }
+  .option-flag { font-size: 18px; }
+  .option-label { font-size: 14px; font-weight: 600; color: #cbd5e1; }
+  .option-btn.selected .option-label { color: var(--blue-pale); }
+  .option-code {
+    font-family: var(--mono); font-size: 11px; color: var(--text-dark);
+    background: rgba(71,85,105,0.2); padding: 1px 6px; border-radius: 4px;
+  }
+  .option-btn.selected .option-code {
+    color: var(--blue-light); background: rgba(59,130,246,0.1);
+  }
+  .option-desc { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+
+  /* Warning */
+  .warning {
+    background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.25);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .warning-icon { font-size: 18px; }
+  .warning-title { font-size: 13px; font-weight: 600; color: var(--yellow); }
+  .warning-text { font-size: 12px; color: #a3873a; }
+
+  /* Result */
+  .result {
+    background: var(--bg-card); border: 1px solid var(--border-light);
+    border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center;
+    backdrop-filter: blur(10px);
+  }
+  .result-label {
+    font-size: 11px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 12px;
+  }
+  .result-tag {
+    font-family: var(--mono); font-size: 32px; font-weight: 700;
+    letter-spacing: 2px; margin-bottom: 6px;
+  }
+  .result-tag .sep { color: var(--text-dark); }
+  .result-tag .p0 { color: var(--blue-light); }
+  .result-tag .p1 { color: var(--green); }
+  .result-tag .p2 { color: var(--pink); }
+  .result-placeholder {
+    font-family: var(--mono); font-size: 28px; color: var(--text-faint);
+    letter-spacing: 3px;
+  }
+  .result-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 16px; }
+  .result-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+  /* Buttons */
+  .btn {
+    padding: 8px 20px; border-radius: 8px; border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; font-family: inherit;
+  }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary.copied { background: var(--green-dark); }
+  .btn-secondary {
+    background: rgba(148,163,184,0.1); border: 1px solid var(--border);
+    color: var(--text-mid);
+  }
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .btn-small {
+    padding: 4px 12px; border-radius: 6px; font-size: 11px;
+  }
+
+  /* Rule preview */
+  .rule-box {
+    background: var(--bg-dark); border: 1px solid rgba(148,163,184,0.08);
+    border-radius: 12px; padding: 16px; margin-bottom: 20px;
+  }
+  .rule-label {
+    font-size: 11px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+  }
+  .rule-code {
+    background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px;
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+  }
+  .rule-code code {
+    font-family: var(--mono); font-size: 12px; color: var(--text-mid);
+    word-break: break-all; line-height: 1.6;
+  }
+
+  /* History */
+  .history {
+    background: rgba(30,41,59,0.5); border: 1px solid rgba(148,163,184,0.08);
+    border-radius: 12px; padding: 16px;
+  }
+  .history-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .history-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .history-actions { display: flex; gap: 6px; }
+  .history-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .history-tag {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg-dark); border: 1px solid var(--border-light);
+    border-radius: 8px; padding: 6px 10px;
+  }
+  .history-tag code { font-family: var(--mono); font-size: 13px; color: #cbd5e1; }
+  .history-tag button {
+    background: none; border: none; color: var(--text-dim);
+    cursor: pointer; font-size: 14px; padding: 0 2px;
+  }
+
+  /* Footer */
+  .footer { text-align: center; margin-top: 32px; font-size: 11px; color: var(--text-faint); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="badge"><span class="badge-dot"></span> Autopilot</div>
+    <div class="title">Group Tag Generator</div>
+    <div class="subtitle">Format: <code>{CC}-{UsageType}-{UserType}</code></div>
+  </div>
+
+  <!-- Country -->
+  <div class="category">
+    <div class="category-label">Country</div>
+    <div class="options" id="country-options"></div>
+  </div>
+
+  <!-- Usage Type -->
+  <div class="category">
+    <div class="category-label">Usage Type</div>
+    <div class="options" id="usageType-options"></div>
+  </div>
+
+  <!-- User Type -->
+  <div class="category">
+    <div class="category-label">User Type</div>
+    <div class="options" id="userType-options"></div>
+  </div>
+
+  <!-- Warning -->
+  <div class="warning hidden" id="warning">
+    <span class="warning-icon">&#9888;</span>
+    <div>
+      <div class="warning-title">Invalid combination</div>
+      <div class="warning-text">Shared devices should not have local admin users (SHD-ADM is not a valid Group Tag).</div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result">
+    <div class="result-label">Generated Group Tag</div>
+    <div id="result-display">
+      <div class="result-placeholder">??-???-???</div>
+    </div>
+    <div class="result-desc" id="result-desc"></div>
+    <div class="result-actions hidden" id="result-actions">
+      <button class="btn btn-primary" id="btn-copy" onclick="copyTag()">Copy Tag</button>
+      <button class="btn btn-secondary" onclick="addToHistory()">+ Add to List</button>
+      <button class="btn btn-ghost" onclick="resetAll()">Reset</button>
+    </div>
+  </div>
+
+  <!-- Rule Preview -->
+  <div class="rule-box hidden" id="rule-box">
+    <div class="rule-label">Dynamic Group Rule (exact match)</div>
+    <div class="rule-code">
+      <code id="rule-text"></code>
+      <button class="btn btn-ghost btn-small" id="btn-copy-rule" onclick="copyRule()">Copy</button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history hidden" id="history">
+    <div class="history-header">
+      <div class="history-label" id="history-label">Saved Tags (0)</div>
+      <div class="history-actions">
+        <button class="btn btn-small" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.2);color:#60a5fa" id="btn-copy-all" onclick="copyAllTags()">Copy All</button>
+        <button class="btn btn-ghost btn-small" onclick="clearHistory()">Clear</button>
+      </div>
+    </div>
+    <div class="history-tags" id="history-tags"></div>
+  </div>
+
+  <div class="footer">Separator: hyphen-minus (U+002D) only &bull; All values UPPERCASE</div>
+</div>
+
+<script>
+const CATEGORIES = {
+  country: [
+    { label: "Germany", value: "DE", flag: "\u{1F1E9}\u{1F1EA}" },
+    { label: "Denmark", value: "DK", flag: "\u{1F1E9}\u{1F1F0}" },
+    { label: "Finland", value: "FI", flag: "\u{1F1EB}\u{1F1EE}" },
+    { label: "France", value: "FR", flag: "\u{1F1EB}\u{1F1F7}" },
+    { label: "Norway", value: "NO", flag: "\u{1F1F3}\u{1F1F4}" },
+    { label: "Sweden", value: "SE", flag: "\u{1F1F8}\u{1F1EA}" },
+  ],
+  usageType: [
+    { label: "Dedicated", value: "DED", desc: "Corporate-owned, single user" },
+    { label: "Shared", value: "SHD", desc: "Corporate-owned, shared / kiosk" },
+  ],
+  userType: [
+    { label: "Standard", value: "STD", desc: "Standard user (no local admin)" },
+    { label: "Admin", value: "ADM", desc: "Local administrator (IT / Admins)" },
+  ],
+};
+
+const VALID_COMBOS = ["DED-STD", "DED-ADM", "SHD-STD"];
+const selections = { country: null, usageType: null, userType: null };
+let history = [];
+
+function init() {
+  Object.keys(CATEGORIES).forEach(catId => {
+    const container = document.getElementById(catId + "-options");
+    CATEGORIES[catId].forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn" + (catId !== "country" ? " wide" : "");
+      btn.dataset.category = catId;
+      btn.dataset.value = opt.value;
+      btn.onclick = () => handleSelect(catId, opt.value);
+
+      let html = '<div class="option-top">';
+      if (opt.flag) html += '<span class="option-flag">' + opt.flag + '</span>';
+      html += '<span class="option-label">' + opt.label + '</span>';
+      html += '<span class="option-code">' + opt.value + '</span>';
+      html += '</div>';
+      if (opt.desc) html += '<span class="option-desc">' + opt.desc + '</span>';
+      btn.innerHTML = html;
+      container.appendChild(btn);
+    });
+  });
+}
+
+function handleSelect(catId, value) {
+  const btn = document.querySelector('[data-category="' + catId + '"][data-value="' + value + '"]');
+  if (btn.classList.contains("disabled")) return;
+  selections[catId] = selections[catId] === value ? null : value;
+  updateUI();
+}
+
+function updateUI() {
+  // Update button states
+  Object.keys(CATEGORIES).forEach(catId => {
+    CATEGORIES[catId].forEach(opt => {
+      const btn = document.querySelector('[data-category="' + catId + '"][data-value="' + opt.value + '"]');
+      btn.classList.toggle("selected", selections[catId] === opt.value);
+      const disabled = catId === "userType" && selections.usageType === "SHD" && opt.value === "ADM";
+      btn.classList.toggle("disabled", disabled);
+    });
+  });
+
+  // Check validity
+  const { country, usageType, userType } = selections;
+  const isInvalid = usageType && userType && !VALID_COMBOS.includes(usageType + "-" + userType);
+  const tag = (country && usageType && userType && !isInvalid)
+    ? country + "-" + usageType + "-" + userType : null;
+
+  // Warning
+  document.getElementById("warning").classList.toggle("hidden", !isInvalid);
+
+  // Result
+  const display = document.getElementById("result-display");
+  const desc = document.getElementById("result-desc");
+  const actions = document.getElementById("result-actions");
+  const ruleBox = document.getElementById("rule-box");
+
+  if (tag) {
+    const parts = tag.split("-");
+    display.innerHTML = '<div class="result-tag">' +
+      '<span class="p0">' + parts[0] + '</span>' +
+      '<span class="sep">-</span>' +
+      '<span class="p1">' + parts[1] + '</span>' +
+      '<span class="sep">-</span>' +
+      '<span class="p2">' + parts[2] + '</span></div>';
+
+    const labels = [
+      CATEGORIES.country.find(o => o.value === country).label,
+      CATEGORIES.usageType.find(o => o.value === usageType).label,
+      CATEGORIES.userType.find(o => o.value === userType).label,
+    ];
+    desc.textContent = labels.join(" \u2022 ");
+    actions.classList.remove("hidden");
+
+    const rule = '(device.devicePhysicalIds -any (_ -eq "[OrderID]:' + tag + '"))';
+    document.getElementById("rule-text").textContent = rule;
+    ruleBox.classList.remove("hidden");
+  } else {
+    display.innerHTML = '<div class="result-placeholder">??-???-???</div>';
+    desc.textContent = "";
+    actions.classList.add("hidden");
+    ruleBox.classList.add("hidden");
+  }
+}
+
+function getTag() {
+  const { country, usageType, userType } = selections;
+  if (!country || !usageType || !userType) return null;
+  if (!VALID_COMBOS.includes(usageType + "-" + userType)) return null;
+  return country + "-" + usageType + "-" + userType;
+}
+
+function copyTag() {
+  const tag = getTag();
+  if (!tag) return;
+  copyToClipboard(tag, "btn-copy", "Copied!", "Copy Tag");
+}
+
+function copyRule() {
+  const tag = getTag();
+  if (!tag) return;
+  const rule = '(device.devicePhysicalIds -any (_ -eq "[OrderID]:' + tag + '"))';
+  copyToClipboard(rule, "btn-copy-rule", "Copied!", "Copy");
+}
+
+function copyToClipboard(text, btnId, successText, originalText) {
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    btn.textContent = successText;
+    if (btnId === "btn-copy") btn.classList.add("copied");
+    setTimeout(() => {
+      btn.textContent = originalText;
+      if (btnId === "btn-copy") btn.classList.remove("copied");
+    }, 2000);
+  });
+}
+
+function addToHistory() {
+  const tag = getTag();
+  if (!tag || history.includes(tag)) return;
+  history.unshift(tag);
+  renderHistory();
+}
+
+function removeFromHistory(tag) {
+  history = history.filter(t => t !== tag);
+  renderHistory();
+}
+
+function clearHistory() {
+  history = [];
+  renderHistory();
+}
+
+function copyAllTags() {
+  if (history.length === 0) return;
+  copyToClipboard(history.join("\n"), "btn-copy-all", "Copied!", "Copy All");
+}
+
+function renderHistory() {
+  const container = document.getElementById("history");
+  const tagsEl = document.getElementById("history-tags");
+  const labelEl = document.getElementById("history-label");
+
+  if (history.length === 0) {
+    container.classList.add("hidden");
+    return;
+  }
+
+  container.classList.remove("hidden");
+  labelEl.textContent = "Saved Tags (" + history.length + ")";
+
+  tagsEl.innerHTML = history.map(t =>
+    '<div class="history-tag">' +
+      '<code>' + t + '</code>' +
+      '<button onclick="copyToClipboard(\'' + t + '\',\'btn-copy-all\',\'Copied!\',\'Copy All\')" title="Copy">\u2398</button>' +
+      '<button onclick="removeFromHistory(\'' + t + '\')" title="Remove">\u00d7</button>' +
+    '</div>'
+  ).join("");
+}
+
+function resetAll() {
+  selections.country = null;
+  selections.usageType = null;
+  selections.userType = null;
+  updateUI();
+}
+
+init();
+updateUI();
+</script>
+</body>
+</html>
