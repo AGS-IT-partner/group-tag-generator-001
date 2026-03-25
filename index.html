@@ -328,11 +328,19 @@
     </div>
   </div>
 
-  <div class="rule-box hidden" id="rule-box">
-    <div class="rule-label">Dynamic Group Rule (exact match)</div>
+  <div class="rule-box hidden" id="rule-box-country">
+    <div class="rule-label">Dynamic Group Rule &mdash; All devices in country</div>
     <div class="rule-code">
-      <code id="rule-text"></code>
-      <button class="btn btn-small" id="btn-copy-rule" onclick="copyRule()">Copy</button>
+      <code id="rule-text-country"></code>
+      <button class="btn btn-small" id="btn-copy-rule-country" onclick="copyRuleCountry()">Copy</button>
+    </div>
+  </div>
+
+  <div class="rule-box hidden" id="rule-box-exact">
+    <div class="rule-label">Dynamic Group Rule &mdash; Exact match</div>
+    <div class="rule-code">
+      <code id="rule-text-exact"></code>
+      <button class="btn btn-small" id="btn-copy-rule-exact" onclick="copyRuleExact()">Copy</button>
     </div>
   </div>
 
@@ -350,10 +358,10 @@
   <div class="footer">
     <div class="footer-meta">
       <span><span class="label">Version</span> 1.0.0</span>
-      <span><span class="label">Author</span> AGS IT-partner, Remi+++</span>
+      <span><span class="label">Author</span> AGS IT-partner, Remi</span>
       <span><span class="label">License</span> MIT</span>
     </div>
-    <div class="footer-brand">&copy; 2026 <a href="https://ags.no" target="_blank">AGS IT-partner</a></div>
+    <div class="footer-brand">&copy; 2026 <a href="https://ags.no" target="_blank">AGS IT-partner</a> &mdash; IT og skytjenester for norske bedrifter</div>
   </div>
 </div>
 
@@ -429,7 +437,8 @@ function updateUI() {
   const display = document.getElementById("result-display");
   const desc = document.getElementById("result-desc");
   const actions = document.getElementById("result-actions");
-  const ruleBox = document.getElementById("rule-box");
+  const ruleBoxCountry = document.getElementById("rule-box-country");
+  const ruleBoxExact = document.getElementById("rule-box-exact");
 
   if (tag) {
     const parts = tag.split("-");
@@ -448,14 +457,20 @@ function updateUI() {
     desc.textContent = labels.join(" \u2022 ");
     actions.classList.remove("hidden");
 
-    const rule = '(device.devicePhysicalIds -any (_ -eq "[OrderID]:' + tag + '"))';
-    document.getElementById("rule-text").textContent = rule;
-    ruleBox.classList.remove("hidden");
+    const ruleCountry = '(device.devicePhysicalIds -any (_ -startsWith "[OrderID]:' + country + '"))';
+    document.getElementById("rule-text-country").textContent = ruleCountry;
+    ruleBoxCountry.classList.remove("hidden");
+
+    const ruleExact = '(device.devicePhysicalIds -any (_ -eq "[OrderID]:' + tag + '"))';
+    document.getElementById("rule-text-exact").textContent = ruleExact;
+    ruleBoxExact.classList.remove("hidden");
   } else {
     display.innerHTML = '<div class="result-placeholder">??-???-???</div>';
     desc.textContent = "";
+    actions.classList.remove("hidden");
     actions.classList.add("hidden");
-    ruleBox.classList.add("hidden");
+    ruleBoxCountry.classList.add("hidden");
+    ruleBoxExact.classList.add("hidden");
   }
 }
 
@@ -472,11 +487,18 @@ function copyTag() {
   doCopy(tag, "btn-copy", "Copied!", "Copy Tag");
 }
 
-function copyRule() {
+function copyRuleCountry() {
+  const { country } = selections;
+  if (!country) return;
+  const rule = '(device.devicePhysicalIds -any (_ -startsWith "[OrderID]:' + country + '"))';
+  doCopy(rule, "btn-copy-rule-country", "Copied!", "Copy");
+}
+
+function copyRuleExact() {
   const tag = getTag();
   if (!tag) return;
   const rule = '(device.devicePhysicalIds -any (_ -eq "[OrderID]:' + tag + '"))';
-  doCopy(rule, "btn-copy-rule", "Copied!", "Copy");
+  doCopy(rule, "btn-copy-rule-exact", "Copied!", "Copy");
 }
 
 function doCopy(text, btnId, successText, originalText) {
